@@ -1,0 +1,7 @@
+#!/bin/sh
+bin="$HOME/.config/CommandK/CommandK.app/Contents/MacOS/CommandK"
+if pgrep -qx CommandK >/dev/null; then
+  killall CommandK 2>/dev/null
+  exit 0
+fi
+exec "$bin" "$@"

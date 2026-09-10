@@ -1,0 +1,107 @@
+#!/bin/sh
+set -eu
+
+scratch_file="$HOME/.config/CommandK/scratch.id"
+cmd="${1:-}"
+
+scratch_toggle() {
+  if [ ! -f "$scratch_file" ]; then
+    exit 0
+  fi
+  id="$(cat "$scratch_file")"
+  minimized="$(yabai -m query --windows --window "$id" 2>/dev/null | jq '."is-minimized"' || echo true)"
+  if [ "$minimized" = "true" ]; then
+    yabai -m window --focus "$id"
+  else
+    yabai -m window "$id" --minimize
+  fi
+}
+
+scratch_add() {
+  id="$(yabai -m query --windows --window | jq '.id')"
+  echo "$id" > "$scratch_file"
+  yabai -m window --minimize
+}
+
+toggle_gaps() {
+  gap="$(yabai -m config window_gap)"
+  if [ "$gap" = "0" ]; then
+    yabai -m config window_gap 6
+    yabai -m config top_padding 12
+    yabai -m config bottom_padding 12
+    yabai -m config left_padding 12
+    yabai -m config right_padding 12
+  else
+    yabai -m config window_gap 0
+    yabai -m config top_padding 0
+    yabai -m config bottom_padding 0
+    yabai -m config left_padding 0
+    yabai -m config right_padding 0
+  fi
+}
+
+toggle_opacity() {
+  on="$(yabai -m config window_opacity)"
+  if [ "$on" = "on" ]; then
+    yabai -m config window_opacity off
+  else
+    yabai -m config window_opacity on
+    yabai -m config active_window_opacity 1.0
+    yabai -m config normal_window_opacity 0.90
+  fi
+}
+
+toggle_layout() {
+  type="$(yabai -m query --spaces --space | jq -r '.type')"
+  if [ "$type" = "bsp" ]; then
+    yabai -m space --layout stack
+  else
+    yabai -m space --layout bsp
+  fi
+}
+
+toggle_group() {
+  type="$(yabai -m query --spaces --space | jq -r '.type')"
+  if [ "$type" = "stack" ]; then
+    yabai -m space --layout bsp
+  else
+    yabai -m space --layout stack
+  fi
+}
+
+close_all() {
+  yabai -m query --windows --space | jq '.[].id' | while read -r id; do
+    yabai -m window "$id" --close || true
+  done
+}
+
+lock_screen() {
+  osascript -e 'tell application "System Events" to keystroke "q" using {command down, control down}'
+}
+
+system_menu() {
+  choice="$(osascript <<'APPLESCRIPT'
+choose from list {"Lock", "Sleep", "Restart", "Shut Down", "Log Out"} with prompt "System" default items {"Lock"}
+APPLESCRIPT
+)" || true
+  case "$choice" in
+    Lock) lock_screen ;;
+    Sleep) pmset sleepnow ;;
+    Restart) osascript -e 'tell application "System Events" to restart' ;;
+    "Shut Down") osascript -e 'tell application "System Events" to shut down' ;;
+    "Log Out") osascript -e 'tell application "System Events" to log out' ;;
+  esac
+}
+
+case "$cmd" in
+  scratch-toggle) scratch_toggle ;;
+  scratch-add) scratch_add ;;
+  gaps) toggle_gaps ;;
+  opacity) toggle_opacity ;;
+  layout) toggle_layout ;;
+  group) toggle_group ;;
+  close-all) close_all ;;
+  lock) lock_screen ;;
+  system) system_menu ;;
+  *) echo "unknown: $cmd" >&2; exit 1 ;;
+esac
