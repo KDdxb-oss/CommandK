@@ -70,6 +70,10 @@ enum Keys {
         case "0x18": return "="
         case "0x2C": return "/"
         case "0x32": return "`"
+        case "0x2B": return "<"
+        case "0x2F": return ">"
+        case "0x27": return "'"
+        case "0x29": return ":"
         default: return key.uppercased()
         }
     }

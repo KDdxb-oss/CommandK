@@ -69,6 +69,23 @@ toggle_group() {
   fi
 }
 
+snap() {
+  preset="${1:-}"
+  case "$preset" in
+    left-half)    grid="1:2:0:0:1:1" ;;
+    right-half)   grid="1:2:1:0:1:1" ;;
+    left-third)   grid="1:3:0:0:1:1" ;;
+    center-third) grid="1:3:1:0:1:1" ;;
+    right-third)  grid="1:3:2:0:1:1" ;;
+    *) echo "unknown snap: $preset" >&2; exit 1 ;;
+  esac
+  floating="$(yabai -m query --windows --window | jq -r '."is-floating"')"
+  if [ "$floating" != "true" ]; then
+    yabai -m window --toggle float
+  fi
+  yabai -m window --grid "$grid"
+}
+
 close_all() {
   yabai -m query --windows --space | jq '.[].id' | while read -r id; do
     yabai -m window "$id" --close || true
@@ -96,6 +113,7 @@ APPLESCRIPT
 case "$cmd" in
   scratch-toggle) scratch_toggle ;;
   scratch-add) scratch_add ;;
+  snap) snap "${2:-}" ;;
   gaps) toggle_gaps ;;
   opacity) toggle_opacity ;;
   layout) toggle_layout ;;
