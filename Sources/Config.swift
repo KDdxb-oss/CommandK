@@ -56,8 +56,16 @@ enum Config {
     }
 
     static func reloadSkhd() {
+        let candidates = [
+            "/opt/homebrew/bin/skhd",
+            "/usr/local/bin/skhd",
+            "/usr/bin/skhd"
+        ]
+        guard let path = candidates.first(where: { FileManager.default.isExecutableFile(atPath: $0) }) else {
+            return
+        }
         let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/opt/homebrew/bin/skhd")
+        task.executableURL = URL(fileURLWithPath: path)
         task.arguments = ["--reload"]
         try? task.run()
     }

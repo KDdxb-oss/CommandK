@@ -2,7 +2,20 @@ PREFIX ?= $(HOME)/.config/CommandK
 APP = $(PREFIX)/CommandK.app
 SWIFT = $(wildcard Sources/*.swift)
 
-.PHONY: build install
+.PHONY: build install deps bootstrap
+
+deps:
+	brew install koekeishiya/formulae/yabai koekeishiya/formulae/skhd jq
+
+bootstrap:
+	@command -v brew >/dev/null 2>&1 || { echo "Homebrew is required: https://brew.sh"; exit 1; }
+	brew install koekeishiya/formulae/yabai koekeishiya/formulae/skhd jq
+	@echo ""
+	@echo "Dependencies ready. Now:"
+	@echo "  1. Grant Accessibility to skhd and yabai (System Settings > Privacy & Security > Accessibility)."
+	@echo "  2. sudo yabai --install-sa && sudo yabai --load-sa   (recommended for full window control)"
+	@echo "  3. brew services start skhd && brew services start yabai"
+	@echo "  4. make install"
 
 build:
 	mkdir -p build/CommandK.app/Contents/MacOS
